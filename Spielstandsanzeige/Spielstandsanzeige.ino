@@ -32,9 +32,24 @@ void setup() {
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
 }
 
+float differenz = 60;
+
+int y = 0;
+
+if (differenz>11)
+{
+  y=y++;
+}
+else
+{
+  break;
+}
+
+
+
 void loop() {
-  leuchten(8);
-  leuchten2(3);
+  leuchten(y);
+  //leuchten2(3);
 }
 
 

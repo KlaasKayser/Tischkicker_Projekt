@@ -32,10 +32,14 @@ void setup() {
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
 }
 
+float differenz = 200;
+
+int x = map(differenz, 11, 200, 1, 10);
+
 void loop() {
 
-  blinken(10);
-  blinken2(10);
+  blinken(x);
+  //blinken2(10);
   
   
 }
@@ -45,10 +49,10 @@ void blinken(int a) {
   for(int l=0; l<10; l++) {
     pixels.setPixelColor(l, pixels.Color(0, 0, 0));
   }
-  for(int i=a-1; i>=0; i=i-1) {
+  for(int i=0; i<a; i++) {
     pixels.setPixelColor(i, pixels.Color(255, 255, 0));
     pixels.show();
-    delay(150);    
+    delay(300);    
   }
 }
 
@@ -56,8 +60,10 @@ void blinken2(int b) {
   for(int x=10; x<20; x++) {
     pixels.setPixelColor(x, pixels.Color(0, 0, 0));
   }
-  for(int f=b+9; f>=10; f=f-1) {
+  for(int f=10; f<b+10; f++) {
     pixels.setPixelColor(f, pixels.Color(0, 0, 255));
+    pixels.show();
+    delay(300);
   }
 pixels.show();
 }
