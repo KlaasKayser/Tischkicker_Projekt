@@ -21,6 +21,10 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
+const byte interruptPin = 2;        //2 ist der pin an der Lichtschranke
+//const byte interruptPin2 = 3;
+
+
 void setup() {
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
   // Any other board, you can remove this part (but no harm leaving it):
@@ -30,28 +34,39 @@ void setup() {
   // END of Trinket-specific code.
 
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  pinMode(interruptPin, INPUT_PULLUP);          //_PULLUP setzt Pin auf 5V
+  Serial.begin(9600);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), tor, RISING);
+  //attachInterrupt(digitalPinToInterrupt(interruptPin2), tor2, RISING);
 }
 
-float differenz = 60;
-
-int y = 0;
-
-if (differenz>11)
-{
-  y=y++;
-}
-else
-{
-  break;
-}
-
-
+int y=0;
+int z=0;
+float zeitseittor = 1000;
 
 void loop() {
   leuchten(y);
-  //leuchten2(3);
+  //Serial.println(y);
+  //Serial.println(digitalRead(interruptPin));
+  //leuchten2(z);
 }
 
+void tor()
+{
+  if(y<10 && (millis()-zeitseittor)>= 2000){
+    y++;
+    zeitseittor = millis();
+    
+  }
+  
+}
+
+void tor2()
+{
+  if(z<10){
+    z++;
+  }
+}
 
 void leuchten(int a) {
   for(int l=0; l<10; l++) {
