@@ -1,7 +1,9 @@
 // NeoPixel Ring simple sketch (c) 2013 Shae Erisson
 // Released under the GPLv3 license to match the rest of the
 // Adafruit NeoPixel library
-
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <Wire.h>
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
@@ -20,10 +22,16 @@
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
+Adafruit_MPU6050 mpu;
 
+const int array_laenge = 300;
+float buffer_array[array_laenge];
+int array_index = 0;
+int tora = 0;
+int torb = 0;
 const byte interruptPin = 2;        //2 ist der pin an der Lichtschranke
 //const byte interruptPin2 = 3;
-
+sensors_event_t a, g, temp;
 
 void setup() {
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
@@ -34,37 +42,79 @@ void setup() {
   // END of Trinket-specific code.
 
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  Serial.begin(115200);
+  while (!Serial) {
+    delay(10); // will pause Zero, Leonardo, etc until serial console opens
+  }
   pinMode(interruptPin, INPUT_PULLUP);          //_PULLUP setzt Pin auf 5V
-  Serial.begin(9600);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), tor, RISING);
-  //attachInterrupt(digitalPinToInterrupt(interruptPin2), tor2, RISING);
+  //attachInterrupt(digitalPinToInterrupt(interruptPin), tor, RISING);
+    // Try to initialize!
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  for(int i=0; i < array_laenge; i++){
+    buffer_array[i] = 0;
+    Serial.println(i);
+  }
+
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+  Serial.println("aaaaaa");
+  delay(100);
 }
 
-int y=0;
-int z=0;
 float zeitseittor = 1000;
+float beschleunigung = 0;
 
 void loop() {
-  leuchten(y);
-  //Serial.println(y);
-  //Serial.println(digitalRead(interruptPin));
-  //leuchten2(z);
-}
 
-void tor()
-{
-  if(y<10 && (millis()-zeitseittor)>= 2000){
-    y++;
+  if(tora<10 && (millis()-zeitseittor)>= 2000 && !digitalRead(interruptPin)){
+    Serial.println("Tor Gefallen");
+    tora++;
     zeitseittor = millis();
+    Serial.println("Sensor nimmt auf");
+
+    float minVal = 10000;
+    float maxVal = -10000;
+    while(millis()<zeitseittor+4000){
+      /* Get new sensor events with the readings */
+      sensors_event_t a, g, temp;
+      mpu.getEvent(&a, &g, &temp);
+      beschleunigung = a.acceleration.y;
+        if (beschleunigung > maxVal) {
+           maxVal = beschleunigung;
+        }
+        if (beschleunigung < minVal) {
+           minVal = beschleunigung;
+        }
+      }
+      float differenz = maxVal-minVal;
     
+    Serial.println("Differenz wird bestimmt");
+    int x = map(differenz, 11, 100, 1, 10);
+    Serial.println(differenz);
+    //blinken(x);
+    leuchten(tora);
   }
   
 }
 
+void tor()
+{
+
+  
+}
+
+
+
 void tor2()
 {
-  if(z<10){
-    z++;
+  if(torb<10){
+    torb++;
   }
 }
 
