@@ -13,7 +13,7 @@
 #define PIN        5 // On Trinket or Gemma, suggest changing this to 1
 
 // How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS 20 // Popular NeoPixel ring size
+#define NUMPIXELS 10 // Popular NeoPixel ring size
 
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
@@ -24,21 +24,23 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 Adafruit_MPU6050 mpu;
 
-const int array_laenge = 300;
-float buffer_array[array_laenge];
-int array_index = 0;
-int tora = 0;
-int torb = 0;
-const byte interruptPin = 2;        //2 ist der pin an der Lichtschranke
-//const byte interruptPin2 = 3;
+int anzahlTore = 0;
+int farbeRot = 255;
+int farbeGruen = 0;
+int farbeBlau = 0;
+
+const int sensorPin = 2;        //2 ist der pin an der Lichtschranke
+const int knopfPlusPin = 4;
+const int knopfMinusPin = 3;
+
 sensors_event_t a, g, temp;
 
 void setup() {
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
   // Any other board, you can remove this part (but no harm leaving it):
-#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+  #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
-#endif
+  #endif
   // END of Trinket-specific code.
 
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
@@ -46,7 +48,9 @@ void setup() {
   while (!Serial) {
     delay(10); // will pause Zero, Leonardo, etc until serial console opens
   }
-  pinMode(interruptPin, INPUT_PULLUP);          //_PULLUP setzt Pin auf 5V
+  pinMode(sensorPin, INPUT);          //_PULLUP setzt Pin auf 5V
+  pinMode(knopfPlusPin, INPUT_PULLUP);
+  pinMode(knopfMinusPin, INPUT_PULLUP);
   //attachInterrupt(digitalPinToInterrupt(interruptPin), tor, RISING);
     // Try to initialize!
   if (!mpu.begin()) {
@@ -55,32 +59,71 @@ void setup() {
       delay(10);
     }
   }
-  for(int i=0; i < array_laenge; i++){
-    buffer_array[i] = 0;
-    Serial.println(i);
-  }
+
 
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  Serial.println("aaaaaa");
-  delay(100);
+  Serial.println("Initialisierung abgeschlossen");
+
+  for(int l=0; l<10; l++) {
+    pixels.setPixelColor(l, pixels.Color(farbeRot, farbeGruen, farbeBlau));
+  } 
+  pixels.show();
+  delay(2000);
+  for(int l=0; l<10; l++) {
+    pixels.setPixelColor(l, pixels.Color(0, 0, 0));
+  }
+  pixels.show();
+
+ Serial.println("Alle LEDs sind aus");
 }
 
-float zeitseittor = 1000;
+float letztesTor = 1000;
 float beschleunigung = 0;
+bool flag = false;
+bool flagPlus = false;
+bool flagMinus = false;
 
 void loop() {
 
-  if(tora<10 && (millis()-zeitseittor)>= 2000 && !digitalRead(interruptPin)){
+  if(!digitalRead(sensorPin)){
+    flag = true;
+  }
+
+  if(!digitalRead(knopfPlusPin) && !digitalRead(knopfMinusPin) && (flagMinus == true || flagPlus == true)){
+    anzahlTore = 0;
+    flagPlus = false;
+    flagMinus = false;
+    leuchten(anzahlTore);
+    delay(1000);
+  }else if(!digitalRead(knopfPlusPin) && flagPlus == true && anzahlTore < 10){
+    anzahlTore++;
+    flagPlus = false;
+    leuchten(anzahlTore);
+    delay(1000);
+  } else if(!digitalRead(knopfMinusPin) && flagMinus == true && anzahlTore > 0){
+    anzahlTore--;
+    flagMinus = false;
+    leuchten(anzahlTore);
+    delay(1000);
+  }
+
+  if(digitalRead(knopfMinusPin) && digitalRead(knopfPlusPin)){
+    flagPlus = true;
+    flagMinus = true;
+  }
+
+
+  if(anzahlTore<10 && (millis()-letztesTor)>= 2000 && digitalRead(sensorPin) && flag == true){
     Serial.println("Tor Gefallen");
-    tora++;
-    zeitseittor = millis();
+    anzahlTore++;
+    letztesTor = millis();
     Serial.println("Sensor nimmt auf");
 
     float minVal = 10000;
     float maxVal = -10000;
-    while(millis()<zeitseittor+4000){
+    while(millis()<letztesTor+1000){
       /* Get new sensor events with the readings */
       sensors_event_t a, g, temp;
       mpu.getEvent(&a, &g, &temp);
@@ -98,42 +141,18 @@ void loop() {
     int x = map(differenz, 11, 100, 1, 10);
     Serial.println(differenz);
     //blinken(x);
-    leuchten(tora);
+    leuchten(anzahlTore);
+    flag = false;
   }
   
-}
-
-void tor()
-{
-
-  
-}
-
-
-
-void tor2()
-{
-  if(torb<10){
-    torb++;
-  }
 }
 
 void leuchten(int a) {
   for(int l=0; l<10; l++) {
-    pixels.setPixelColor(l, pixels.Color(0, 0, 0));
+    pixels.setPixelColor(l, pixels.Color(0,0,0));
   }
   for(int i=a-1; i>=0; i=i-1) {
-    pixels.setPixelColor(i, pixels.Color(255, 255, 0));
-  }
-pixels.show();
-}
-
-void leuchten2(int b) {
-  for(int x=10; x<20; x++) {
-    pixels.setPixelColor(x, pixels.Color(0, 0, 0));
-  }
-  for(int f=b+9; f>=10; f=f-1) {
-    pixels.setPixelColor(f, pixels.Color(0, 0, 255));
+    pixels.setPixelColor(i, pixels.Color(farbeRot, farbeGruen, farbeBlau));
   }
 pixels.show();
 }
