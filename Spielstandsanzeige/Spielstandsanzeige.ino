@@ -140,7 +140,7 @@ void loop() {
     Serial.println("Differenz wird bestimmt");
     int x = map(differenz, 11, 100, 1, 10);
     Serial.println(differenz);
-    //blinken(x);
+    blinken(x);
     leuchten(anzahlTore);
     flag = false;
   }
@@ -155,4 +155,16 @@ void leuchten(int a) {
     pixels.setPixelColor(i, pixels.Color(farbeRot, farbeGruen, farbeBlau));
   }
 pixels.show();
+}
+
+
+void blinken(int a) {
+  for(int l=0; l<10; l++) {
+    pixels.setPixelColor(l, pixels.Color(0, 0, 0));
+  }
+  for(int i=0; i<a; i++) {
+    pixels.setPixelColor(i, pixels.Color(255, 255, 0));
+    pixels.show();
+    delay(300);    
+  }
 }
