@@ -25,13 +25,13 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_MPU6050 mpu;
 
 int anzahlTore = 0;
-int farbeRot = 255;
-int farbeGruen = 0;
-int farbeBlau = 0;
+int farbeRot = 0; //Gelb: 255 Blau: 0
+int farbeGruen = 0; //Gelb: 150 Blau; 0
+int farbeBlau = 255;  //Gelb: 0 Blau: 255
 
 const int sensorPin = 2;        //2 ist der pin an der Lichtschranke
-const int knopfPlusPin = 4;
-const int knopfMinusPin = 3;
+const int knopfPlusPin = 4; // Gelb: 3 Blau: 4
+const int knopfMinusPin = 3;  //Gelb 4 Blau: 3
 
 sensors_event_t a, g, temp;
 
@@ -123,7 +123,7 @@ void loop() {
 
     float minVal = 10000;
     float maxVal = -10000;
-    while(millis()<letztesTor+1000){
+    while(millis()<letztesTor+2000){
       /* Get new sensor events with the readings */
       sensors_event_t a, g, temp;
       mpu.getEvent(&a, &g, &temp);
@@ -141,6 +141,7 @@ void loop() {
     int x = map(differenz, 11, 100, 1, 10);
     Serial.println(differenz);
     blinken(x);
+    delay(2000);
     leuchten(anzahlTore);
     flag = false;
   }
@@ -152,7 +153,7 @@ void leuchten(int a) {
     pixels.setPixelColor(l, pixels.Color(0,0,0));
   }
   for(int i=a-1; i>=0; i=i-1) {
-    pixels.setPixelColor(i, pixels.Color(farbeRot, farbeGruen, farbeBlau));
+    pixels.setPixelColor((9-i), pixels.Color(farbeRot, farbeGruen, farbeBlau));
   }
 pixels.show();
 }
@@ -163,7 +164,7 @@ void blinken(int a) {
     pixels.setPixelColor(l, pixels.Color(0, 0, 0));
   }
   for(int i=0; i<a; i++) {
-    pixels.setPixelColor(i, pixels.Color(255, 255, 0));
+    pixels.setPixelColor((9-i), pixels.Color(255, 255, 255));
     pixels.show();
     delay(300);    
   }
